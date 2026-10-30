@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>donnez-moi-un-euro.com</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-outer-a:#2E2A23; --bg-outer-b:#1A1814;
+    --panel:#17150F; --panel-text:#F3EEE4; --panel-text-soft:rgba(243,238,228,.6); --panel-text-softer:rgba(243,238,228,.42);
+    --card:#F3EEE4; --card-text:#17150F; --card-text-soft:rgba(23,21,15,.55); --card-text-softer:rgba(23,21,15,.4);
+    --accent:#E8B33D; --accent-hi:#F1C560; --accent-lo:#D99C22;
+    --coral:#C8452B; --white:#fff; --line:rgba(23,21,15,.1); --line-dark:rgba(243,238,228,.2);
+    --display:'Bricolage Grotesque',system-ui,sans-serif; --body:'Instrument Sans',system-ui,sans-serif;
+  }
+  :root:not([data-theme="light"]){ /* deliberately dark brand look, kept for viewer dark-mode too */
+    --bg-outer-a:#2E2A23; --bg-outer-b:#1A1814;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){ --bg-outer-a:#2E2A23; --bg-outer-b:#1A1814; }
+  }
+  :root[data-theme="dark"]{ --bg-outer-a:#2E2A23; --bg-outer-b:#1A1814; }
+
+  *{box-sizing:border-box}
+  html,body{height:100%; overflow:hidden}
+  body{
+    margin:0; height:100vh; height:100dvh; background:radial-gradient(120% 80% at 50% 0%,var(--bg-outer-a) 0%,var(--bg-outer-b) 70%);
+    font-family:var(--body); color:var(--panel-text);
+    display:flex; justify-content:center;
+  }
+  .app{width:100%; max-width:460px; height:100vh; height:100dvh; display:flex; flex-direction:column; overflow:hidden; padding-bottom:20px}
+  .topbar{display:flex; flex-direction:column; align-items:center; gap:4px; padding:28px 20px 6px}
+  .topbar .brand{font-family:var(--display); font-weight:800; font-size:19px; letter-spacing:-.02em; color:var(--panel-text)}
+  .topbar .brand span{color:var(--coral)}
+  .card{flex:1; background:var(--card); color:var(--card-text); border-radius:26px 26px 0 0; margin-top:14px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 -20px 60px rgba(0,0,0,.35)}
+  .screen{flex:1; display:none; flex-direction:column; padding:20px 22px 0; overflow-y:auto; min-height:0}
+  .screen.active{display:flex}
+
+  @keyframes coinIn{0%{transform:translateY(-40px) rotate(-25deg);opacity:0}60%{transform:translateY(6px) rotate(6deg);opacity:1}100%{transform:translateY(0) rotate(0);opacity:1}}
+  @keyframes pulseRing{0%{transform:scale(.9);opacity:.5}100%{transform:scale(1.5);opacity:0}}
+
+  .coin-wrap{margin-top:8px; position:relative; align-self:center; width:150px; height:150px; display:flex; align-items:center; justify-content:center}
+  .coin-ring{position:absolute; inset:0; border-radius:50%; border:2px solid var(--accent); animation:pulseRing 2.6s ease-out infinite}
+  .coin{width:136px; height:136px; border-radius:50%; background:linear-gradient(150deg,var(--accent-hi),var(--accent-lo)); display:flex; align-items:center; justify-content:center; box-shadow:inset 0 -6px 0 rgba(0,0,0,.12), 0 12px 24px rgba(216,156,34,.35); animation:coinIn .8s cubic-bezier(.2,.9,.3,1.2) both}
+  .coin span{font-family:var(--display); font-weight:800; font-size:64px; color:var(--card-text); line-height:1}
+
+  h1.title{margin:24px 0 0; font-family:var(--display); font-weight:800; font-size:30px; line-height:1.05; letter-spacing:-.03em}
+  p.sub{margin:10px 0 0; font-size:15px; line-height:1.5; color:var(--card-text-soft); text-align:center}
+
+  .spacer{margin-top:auto; padding-bottom:22px; display:flex; flex-direction:column; gap:10px}
+  .total-row{display:flex; align-items:baseline; gap:8px; font-size:13px; color:var(--card-text-soft)}
+  .total-row b{font-family:var(--display); font-weight:800; font-size:18px; color:var(--card-text)}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .btn{border:none; cursor:pointer; font-family:var(--display); font-weight:800; letter-spacing:-.02em; border-radius:18px; padding:19px 0; font-size:24px}
+  .btn-dark{background:var(--panel); color:var(--panel-text)}
+  .btn-dark:hover{background:#2b271d}
+  .btn-accent{background:var(--accent); color:var(--card-text)}
+  .btn-accent:hover{background:var(--accent-hi)}
+  .link-btn{border:none; background:none; cursor:pointer; font-family:var(--body); font-size:13px; color:var(--card-text-soft); text-decoration:underline; padding:4px}
+
+  .back{align-self:flex-start; border:none; background:#E8E0D1; cursor:pointer; width:36px; height:36px; border-radius:50%; font-size:16px; color:var(--card-text)}
+  .amount-row{margin-top:20px; font-size:13px; color:var(--card-text-soft)}
+  .amount-big{display:flex; align-items:baseline; gap:10px}
+  .amount-big span.amt{font-family:var(--display); font-weight:800; font-size:56px; line-height:1.05; letter-spacing:-.03em}
+  .amount-big span.to{font-size:13.5px; color:var(--card-text-soft)}
+
+  .method{margin-top:18px; padding:15px; border-radius:18px; background:var(--white); border:1px solid var(--line); display:flex; align-items:center; gap:12px; cursor:pointer}
+  .method:hover{border-color:var(--accent)}
+  .method.disabled{opacity:.55; cursor:default}
+  .method .badge{width:40px; height:40px; border-radius:12px; background:var(--panel); color:var(--panel-text); display:flex; align-items:center; justify-content:center; font-family:var(--display); font-weight:800; font-size:14px; flex:none}
+  .method .body{flex:1; min-width:0}
+  .method .name{font-weight:600; font-size:14.5px}
+  .method .desc{font-size:12px; color:var(--card-text-soft); margin-top:1px}
+  .method .go{font-size:13px; color:var(--card-text-soft)}
+
+  .wero-box{margin-top:10px; padding:14px; border-radius:14px; background:#F8F5EE; border:1px dashed var(--line); font-size:13px; line-height:1.5; color:var(--card-text-soft); display:none}
+  .wero-box.open{display:block}
+  .wero-box b{color:var(--card-text)}
+  .copy-row{margin-top:8px; display:flex; gap:8px}
+  .copy-row input{flex:1; padding:10px 12px; border-radius:10px; border:1px solid var(--line); font-family:var(--body); font-size:14px; background:var(--white); color:var(--card-text)}
+  .copy-row button{border:none; border-radius:10px; padding:0 14px; background:var(--panel); color:var(--panel-text); font-family:var(--body); font-size:13px; cursor:pointer}
+
+  .confirm-note{margin-top:14px; font-size:11.5px; line-height:1.45; color:var(--card-text-softer)}
+
+  .thanks-screen{background:var(--panel); color:var(--panel-text)}
+  .thanks-coin{align-self:center; margin-top:14px; width:88px; height:88px; border-radius:50%; background:linear-gradient(150deg,var(--accent-hi),var(--accent-lo)); display:flex; align-items:center; justify-content:center; animation:coinIn .7s cubic-bezier(.2,.9,.3,1.2) both}
+  .thanks-coin span{font-family:var(--display); font-weight:800; font-size:40px; color:var(--card-text)}
+  h2.thanks-title{margin:22px 0 0; font-family:var(--display); font-weight:800; font-size:32px; line-height:1.05; letter-spacing:-.03em; text-align:center}
+  p.thanks-line{margin:10px 0 0; text-align:center; font-size:14px; line-height:1.5; color:var(--panel-text-soft)}
+  .cert{margin-top:22px; padding:15px; border-radius:16px; border:1px dashed var(--line-dark)}
+  .cert .eyebrow{font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--panel-text-softer)}
+  .cert .name{margin-top:7px; font-family:var(--display); font-weight:800; font-size:20px; letter-spacing:-.02em}
+  .cert .valid{margin-top:3px; font-size:12px; color:var(--panel-text-softer)}
+  .msg-label{margin-top:16px; font-size:12px; font-weight:600; color:var(--panel-text-soft); margin-bottom:6px}
+  .msg-input{width:100%; padding:13px 14px; border-radius:13px; border:1px solid var(--line-dark); background:rgba(243,238,228,.06); font-family:var(--body); font-size:14px; color:var(--panel-text); outline:none}
+  .msg-input::placeholder{color:var(--panel-text-softer)}
+
+  .wall-head{padding:0}
+  .wall-head h2{margin:0; font-family:var(--display); font-weight:800; font-size:26px; letter-spacing:-.025em}
+  .wall-head p{margin:5px 0 0; font-size:13px; color:var(--card-text-soft)}
+  .wall-list{flex:1; overflow:auto; margin-top:12px; padding-bottom:12px; display:flex; flex-direction:column; gap:9px}
+  .donor{display:flex; gap:11px; padding:12px 13px; border-radius:15px; background:var(--white); border:1px solid var(--line)}
+  .donor .init{flex:none; width:36px; height:36px; border-radius:11px; background:#E8E0D1; display:flex; align-items:center; justify-content:center; font-family:var(--display); font-weight:800; font-size:14px}
+  .donor .body{flex:1; min-width:0}
+  .donor .row{display:flex; align-items:baseline; justify-content:space-between; gap:8px}
+  .donor .name{font-weight:600; font-size:14px}
+  .donor .amt{font-family:var(--display); font-weight:800; font-size:14px; color:var(--coral)}
+  .donor .msg{font-size:12.5px; line-height:1.4; color:var(--card-text-soft); margin-top:1px}
+  .donor .time{margin-top:2px; font-size:11px; color:var(--card-text-softer)}
+
+  .tabs{display:flex; gap:6px; padding:8px 16px 14px; background:var(--card); border-top:1px solid var(--line); border-radius:0 0 26px 26px}
+  .tab{flex:1; border:none; cursor:pointer; padding:10px; border-radius:13px; font-family:var(--body); font-size:13px; font-weight:600; background:transparent; color:var(--card-text-soft)}
+  .tab.on{background:var(--panel); color:var(--panel-text)}
+
+  ::-webkit-scrollbar{width:0;height:0}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">donnez-moi<span>-un-euro</span></div>
+  </div>
+
+  <div class="card">
+
+    <!-- HOME -->
+    <div class="screen active" data-screen="home">
+      <div class="coin-wrap"><div class="coin-ring"></div><div class="coin"><span>€</span></div></div>
+      <h1 class="title">Donnez-moi un ou deux euros</h1>
+      <p class="sub">sans motif particulier, juste parce que tu es sympa</p>
+      <div class="spacer">
+        <div class="total-row"><b id="totalLabel">0 €</b><span>récoltés par des gens sympas</span></div>
+        <div class="grid2">
+          <button class="btn btn-dark" data-pick="1">1 €</button>
+          <button class="btn btn-accent" data-pick="2">2 €</button>
+        </div>
+        <button class="link-btn" data-pick="5">ou 5 € si vraiment tu as trop d'argent</button>
+      </div>
+    </div>
+
+    <!-- PAY -->
+    <div class="screen" data-screen="pay">
+      <button class="back" data-go="home">←</button>
+      <div class="amount-row">Tu envoies</div>
+      <div class="amount-big"><span class="amt" id="amountLabel">1 €</span><span class="to">à un inconnu</span></div>
+
+      <div class="method" id="weroMethod">
+        <div class="badge">W</div>
+        <div class="body">
+          <div class="name">Wero</div>
+          <div class="desc" id="weroDesc">Virement instantané, sans frais</div>
+        </div>
+        <div class="go">›</div>
+      </div>
+      <div class="wero-box" id="weroBox"></div>
+
+      <div class="spacer">
+        <button class="btn btn-accent" id="confirmBtn" style="font-size:16px;padding:17px 0">J'ai envoyé les {{amount}} € ✓</button>
+        <p class="confirm-note">Compteur basé sur l'honneur : aucun paiement n'est vérifié automatiquement par cette page.</p>
+      </div>
+    </div>
+
+    <!-- THANKS -->
+    <div class="screen thanks-screen" data-screen="thanks" style="padding:24px 22px 0">
+      <div class="thanks-coin"><span>€</span></div>
+      <h2 class="thanks-title">Merci.<br>Sincèrement.</h2>
+      <p class="thanks-line" id="thanksLine">Un euro de plus, une question de moins sur le sens de tout ça.</p>
+      <div class="cert">
+        <div class="eyebrow">Certificat de sympathie</div>
+        <div class="name">Officiellement sympa</div>
+        <div class="valid">Valable à vie · non transférable</div>
+      </div>
+      <div class="msg-label">Un mot pour le mur ? (facultatif)</div>
+      <input class="msg-input" id="msgInput" placeholder="ex : tiens, prends ça">
+      <div class="spacer">
+        <button class="btn btn-accent" id="publishBtn" style="font-size:15px;padding:16px 0">Me montrer sur le mur</button>
+        <button class="link-btn" data-go="home" style="color:var(--panel-text-soft)">Retour à l'accueil</button>
+      </div>
+    </div>
+
+    <!-- WALL -->
+    <div class="screen" data-screen="wall" style="padding-top:20px">
+      <div class="wall-head">
+        <h2>Le mur des sympas</h2>
+        <p id="donorCountLabel">0 personne sympa · 0 € au total</p>
+      </div>
+      <div class="wall-list" id="wallList"></div>
+    </div>
+
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab" data-go="home">Donner</button>
+    <button class="tab" data-go="wall">Le mur</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  // ------- À remplir dès que les liens sont prêts -------
+  const WERO_PHONE = "";          // ex: "06 12 34 56 78"
+  // -------------------------------------------------------
+
+  const $ = (s, r) => (r||document).querySelector(s);
+  const $$ = (s, r) => Array.from((r||document).querySelectorAll(s));
+
+  const STORE_KEY = "dmue_state_v1";
+  let state = { total: 11, donors: [], amount: 1 };
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+    if (saved) state = Object.assign(state, saved);
+  } catch(e){}
+
+  function persist(){
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch(e){}
+  }
+
+  function showScreen(name){
+    $$(".screen").forEach(el => el.classList.toggle("active", el.dataset.screen === name));
+    $$(".tab").forEach(el => el.classList.toggle("on", el.dataset.go === name || (name==="pay"&&el.dataset.go==="home") || (name==="thanks"&&el.dataset.go==="home")));
+  }
+
+  function renderHome(){
+    $("#totalLabel").textContent = state.total.toLocaleString("fr-FR") + " €";
+  }
+
+  function renderPay(){
+    $("#amountLabel").textContent = state.amount + " €";
+    $("#confirmBtn").textContent = "J'ai envoyé les " + state.amount + " € ✓";
+
+    if (WERO_PHONE) {
+      $("#weroDesc").textContent = "Virement instantané, sans frais";
+      $("#weroMethod").classList.remove("disabled");
+    } else {
+      $("#weroDesc").textContent = "Pas encore disponible";
+      $("#weroMethod").classList.add("disabled");
+    }
+    $("#weroBox").classList.remove("open");
+    $("#weroBox").innerHTML = "";
+  }
+
+  function renderThanks(){
+    $("#thanksLine").textContent = state.amount >= 5
+      ? "Cinq euros. Tu es un mécène maintenant."
+      : "Un euro de plus, une question de moins sur le sens de tout ça.";
+    $("#msgInput").value = "";
+  }
+
+  function renderWall(){
+    const list = $("#wallList");
+    list.innerHTML = "";
+    const seed = [
+      {initial:"M", name:"Marine L.", amount:"2 €", msg:"Je ne sais pas pourquoi j'ai fait ça.", time:"il y a 4 min"},
+      {initial:"K", name:"Anonyme", amount:"1 €", msg:"Pour l'honnêteté de la démarche.", time:"il y a 26 min"},
+      {initial:"T", name:"Thomas B.", amount:"5 €", msg:"Erreur de manipulation, mais bon.", time:"il y a 1 h"},
+      {initial:"S", name:"Sofia", amount:"1 €", msg:"C'est moins cher qu'un café et ça m'a plus amusé.", time:"il y a 2 h"},
+      {initial:"A", name:"Anonyme", amount:"2 €", msg:"Ne me remercie pas.", time:"il y a 3 h"}
+    ];
+    const donors = state.donors.concat(seed);
+    const totalPeople = state.donors.length + seed.length;
+    $("#donorCountLabel").textContent = totalPeople + " personne" + (totalPeople>1?"s":"") + " sympa" + (totalPeople>1?"s":"") + " · " + state.total.toLocaleString("fr-FR") + " € au total";
+    donors.forEach(d => {
+      const el = document.createElement("div");
+      el.className = "donor";
+      el.innerHTML = '<div class="init">'+d.initial+'</div><div class="body"><div class="row"><span class="name">'+d.name+'</span><span class="amt">'+d.amount+'</span></div><div class="msg">'+(d.msg||"Sans commentaire.")+'</div><div class="time">'+d.time+'</div></div>';
+      list.appendChild(el);
+    });
+  }
+
+  function go(name){
+    if (name === "home") renderHome();
+    if (name === "pay") renderPay();
+    if (name === "thanks") renderThanks();
+    if (name === "wall") renderWall();
+    showScreen(name);
+  }
+
+  $$("[data-pick]").forEach(btn => btn.addEventListener("click", () => {
+    state.amount = parseInt(btn.dataset.pick, 10);
+    go("pay");
+  }));
+
+  $$("[data-go]").forEach(btn => btn.addEventListener("click", () => go(btn.dataset.go)));
+
+  $("#weroMethod").addEventListener("click", () => {
+    const box = $("#weroBox");
+    if (!WERO_PHONE) return;
+    box.classList.add("open");
+    box.innerHTML = "Ouvre l'appli de ta banque, choisis <b>Wero</b> \u2192 demande / envoi d'argent, et envoie "+state.amount+" € au numéro ci-dessous.<div class='copy-row'><input id='weroPhoneVal' readonly value='"+WERO_PHONE+"'><button id='copyWero'>Copier</button></div>";
+    $("#copyWero").addEventListener("click", () => {
+      navigator.clipboard && navigator.clipboard.writeText(WERO_PHONE).catch(()=>{});
+      $("#copyWero").textContent = "Copié !";
+    });
+  });
+
+  $("#confirmBtn").addEventListener("click", () => {
+    state.total += state.amount;
+    persist();
+    go("thanks");
+  });
+
+  $("#publishBtn").addEventListener("click", () => {
+    const msg = $("#msgInput").value.trim();
+    state.donors.unshift({ initial:"V", name:"Vous", amount: state.amount + " €", msg: msg || "Sans commentaire.", time:"à l'instant" });
+    persist();
+    go("wall");
+  });
+
+  go("home");
+})();
+</script>
+</body>
+</html>
